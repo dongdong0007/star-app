@@ -1,0 +1,5 @@
+backend/star.db
+backend/__pycache__/
+*.pyc
+.venv/
+venv/
