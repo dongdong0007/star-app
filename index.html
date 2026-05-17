@@ -18,7 +18,7 @@
         }
 
         .app {
-            max-width: 980px;
+            max-width: 820px;
             margin: 0 auto;
         }
 
@@ -43,8 +43,7 @@
         }
 
         h1,
-        h2,
-        h3 {
+        h2 {
             margin: 0;
             color: #202938;
         }
@@ -59,10 +58,6 @@
             margin-bottom: 16px;
         }
 
-        h3 {
-            font-size: 16px;
-        }
-
         label {
             display: block;
             margin-top: 16px;
@@ -71,12 +66,14 @@
         }
 
         input[type="text"],
-        input[type="number"] {
+        input[type="number"],
+        select {
             width: 100%;
             padding: 10px;
             margin-top: 6px;
             border: 1px solid #cbd5e1;
             border-radius: 6px;
+            background: #fff;
             font-size: 16px;
         }
 
@@ -110,7 +107,7 @@
 
         .tiers {
             display: grid;
-            grid-template-columns: repeat(8, minmax(54px, 1fr));
+            grid-template-columns: repeat(4, minmax(64px, 1fr));
             gap: 8px;
             margin-top: 12px;
         }
@@ -145,58 +142,6 @@
             font-size: 14px;
         }
 
-        .team-list {
-            display: grid;
-            gap: 12px;
-        }
-
-        .team-card {
-            border: 1px solid #e2e8f0;
-            border-radius: 8px;
-            padding: 14px;
-            background: #fff;
-        }
-
-        .team-head {
-            display: flex;
-            justify-content: space-between;
-            gap: 12px;
-            align-items: flex-start;
-        }
-
-        .team-code {
-            color: #0f172a;
-            font-weight: 700;
-        }
-
-        .team-total {
-            color: #2563eb;
-            font-size: 22px;
-            font-weight: 700;
-            white-space: nowrap;
-        }
-
-        .team-meta {
-            margin-top: 6px;
-            color: #64748b;
-            font-size: 14px;
-        }
-
-        .member-list {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-            margin-top: 10px;
-        }
-
-        .member {
-            background: #f1f5f9;
-            border-radius: 999px;
-            padding: 6px 10px;
-            color: #334155;
-            font-size: 14px;
-        }
-
         @media (max-width: 760px) {
             body {
                 padding: 16px;
@@ -208,10 +153,6 @@
 
             .panel {
                 padding: 18px;
-            }
-
-            .tiers {
-                grid-template-columns: repeat(4, minmax(54px, 1fr));
             }
         }
     </style>
@@ -227,30 +168,24 @@
                     <label for="userId">你的 ID</label>
                     <input type="text" id="userId" required maxlength="20" placeholder="请输入你的 ID">
 
-                    <label for="teamCode">组队码</label>
-                    <input type="text" id="teamCode" maxlength="20" placeholder="输入相同组队码即可组队">
-                    <p class="hint">每个组队码最多 5 人。留空则只记录个人星级，不加入队伍。</p>
-
                     <label for="starCount">星级个数</label>
                     <input type="number" id="starCount" required min="0" max="999" placeholder="请输入星级个数">
+
+                    <label for="rewardTier">选择档位</label>
+                    <select id="rewardTier" required></select>
 
                     <button type="submit">提交</button>
                 </form>
             </div>
 
             <div class="panel">
-                <h2>奖励档位</h2>
-                <p class="hint">队伍总星级达到对应档位后，可兑换该档位奖励。</p>
+                <h2>可选档位</h2>
+                <p class="hint">提交时选择本次对应的奖励档位。</p>
                 <div class="tiers" id="rewardTiers"></div>
             </div>
         </section>
 
         <div class="reset-info" id="resetInfo"></div>
-
-        <section class="panel">
-            <h2>队伍排行榜</h2>
-            <div class="team-list" id="teamList"></div>
-        </section>
 
         <section class="panel">
             <h2>个人排行榜</h2>
@@ -259,8 +194,8 @@
                     <tr>
                         <th>排名</th>
                         <th>ID</th>
-                        <th>组队码</th>
                         <th>星级数量</th>
+                        <th>选择档位</th>
                     </tr>
                 </thead>
                 <tbody></tbody>
@@ -286,35 +221,22 @@
 
         function renderRewardTiers(tiers) {
             const rewardTiers = document.getElementById('rewardTiers');
+            const rewardTierSelect = document.getElementById('rewardTier');
+
             rewardTiers.innerHTML = '';
+            rewardTierSelect.innerHTML = '';
 
             tiers.forEach((tier) => {
                 const item = document.createElement('div');
                 item.className = 'tier';
                 item.textContent = tier;
                 rewardTiers.appendChild(item);
+
+                const option = document.createElement('option');
+                option.value = tier;
+                option.textContent = `${tier} 档`;
+                rewardTierSelect.appendChild(option);
             });
-        }
-
-        function renderTeamMessage(message) {
-            const teamList = document.getElementById('teamList');
-            teamList.innerHTML = '';
-            const item = document.createElement('p');
-            item.className = 'hint';
-            item.textContent = message;
-            teamList.appendChild(item);
-        }
-
-        function getTeamRewardText(team) {
-            if (!team.current_tier) {
-                return `尚未达到奖励档位，距离 30 档还差 ${30 - team.total_star} 星`;
-            }
-
-            if (!team.next_tier) {
-                return `已达到最高奖励档位 ${team.current_tier}`;
-            }
-
-            return `已达到 ${team.current_tier} 档，距离 ${team.next_tier} 档还差 ${team.stars_to_next} 星`;
         }
 
         async function updateRewardTiers() {
@@ -328,63 +250,6 @@
                 renderRewardTiers(data.tiers || FALLBACK_REWARD_TIERS);
             } catch (error) {
                 renderRewardTiers(FALLBACK_REWARD_TIERS);
-            }
-        }
-
-        async function updateTeams() {
-            renderTeamMessage('加载中...');
-
-            try {
-                const res = await fetch(`${API_BASE}/teams`);
-                if (!res.ok) {
-                    throw new Error('获取队伍失败');
-                }
-
-                const teams = await res.json();
-                if (!Array.isArray(teams) || teams.length === 0) {
-                    renderTeamMessage('暂无队伍数据');
-                    return;
-                }
-
-                const teamList = document.getElementById('teamList');
-                teamList.innerHTML = '';
-
-                teams.forEach((team) => {
-                    const card = document.createElement('article');
-                    card.className = 'team-card';
-
-                    const head = document.createElement('div');
-                    head.className = 'team-head';
-
-                    const titleWrap = document.createElement('div');
-                    const title = document.createElement('h3');
-                    title.className = 'team-code';
-                    title.textContent = `队伍 ${team.team_code}`;
-                    const meta = document.createElement('div');
-                    meta.className = 'team-meta';
-                    meta.textContent = `${team.member_count}/${team.max_members} 人 · ${getTeamRewardText(team)}`;
-                    titleWrap.append(title, meta);
-
-                    const total = document.createElement('div');
-                    total.className = 'team-total';
-                    total.textContent = `${team.total_star} 星`;
-
-                    head.append(titleWrap, total);
-                    card.appendChild(head);
-
-                    const memberList = document.createElement('div');
-                    memberList.className = 'member-list';
-                    team.members.forEach((member) => {
-                        const item = document.createElement('span');
-                        item.className = 'member';
-                        item.textContent = `${member.id}: ${member.star}`;
-                        memberList.appendChild(item);
-                    });
-                    card.appendChild(memberList);
-                    teamList.appendChild(card);
-                });
-            } catch (error) {
-                renderTeamMessage('队伍功能需要新版后端支持，请确认后端已部署最新代码');
             }
         }
 
@@ -409,15 +274,15 @@
                     const tr = document.createElement('tr');
                     const rankTd = document.createElement('td');
                     const idTd = document.createElement('td');
-                    const teamTd = document.createElement('td');
                     const starTd = document.createElement('td');
+                    const tierTd = document.createElement('td');
 
                     rankTd.textContent = index + 1;
                     idTd.textContent = item.id;
-                    teamTd.textContent = item.team_code || '-';
                     starTd.textContent = item.star;
+                    tierTd.textContent = item.reward_tier ? `${item.reward_tier} 档` : '-';
 
-                    tr.append(rankTd, idTd, teamTd, starTd);
+                    tr.append(rankTd, idTd, starTd, tierTd);
                     tbody.appendChild(tr);
                 });
             } catch (error) {
@@ -446,8 +311,8 @@
             event.preventDefault();
 
             const id = document.getElementById('userId').value.trim();
-            const teamCode = document.getElementById('teamCode').value.trim().toUpperCase();
             const star = Number(document.getElementById('starCount').value);
+            const rewardTier = Number(document.getElementById('rewardTier').value);
 
             if (!id) {
                 alert('请输入 ID');
@@ -459,11 +324,16 @@
                 return;
             }
 
+            if (!FALLBACK_REWARD_TIERS.includes(rewardTier)) {
+                alert('请选择有效的奖励档位');
+                return;
+            }
+
             try {
                 const res = await fetch(`${API_BASE}/submit`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ id, star, team_code: teamCode })
+                    body: JSON.stringify({ id, star, reward_tier: rewardTier })
                 });
                 const data = await res.json();
 
@@ -471,7 +341,6 @@
                     alert('提交成功！');
                     form.reset();
                     updateLeaderboard();
-                    updateTeams();
                 } else {
                     alert(data.msg || '提交失败');
                 }
@@ -482,7 +351,6 @@
 
         updateRewardTiers();
         updateLeaderboard();
-        updateTeams();
         updateResetInfo();
     </script>
 </body>
